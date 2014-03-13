@@ -15,13 +15,13 @@ class Plus < KPeg::CompiledParser
     return _tmp
   end
 
-  # number = < /[0-9]*/ > { text.to_i }
+  # number = < /[0-9]*(\.[0-9]*)?/ > { text.to_f }
   def _number
 
     _save = self.pos
     while true # sequence
       _text_start = self.pos
-      _tmp = scan(/\A(?-mix:[0-9]*)/)
+      _tmp = scan(/\A(?-mix:[0-9]*(\.[0-9]*)?)/)
       if _tmp
         text = get_text(_text_start)
       end
@@ -29,7 +29,7 @@ class Plus < KPeg::CompiledParser
         self.pos = _save
         break
       end
-      @result = begin;  text.to_i ; end
+      @result = begin;  text.to_f ; end
       _tmp = true
       unless _tmp
         self.pos = _save
@@ -41,7 +41,7 @@ class Plus < KPeg::CompiledParser
     return _tmp
   end
 
-  # expr = (expr:e1 ws "+" ws expr:e2 { e1 + e2 } | number)
+  # expr = (expr:e1 ws? "+" ws? expr:e2 { e1 + e2 } | number)
   def _expr
 
     _save = self.pos
@@ -55,7 +55,12 @@ class Plus < KPeg::CompiledParser
           self.pos = _save1
           break
         end
+        _save2 = self.pos
         _tmp = apply(:_ws)
+        unless _tmp
+          _tmp = true
+          self.pos = _save2
+        end
         unless _tmp
           self.pos = _save1
           break
@@ -65,7 +70,12 @@ class Plus < KPeg::CompiledParser
           self.pos = _save1
           break
         end
+        _save3 = self.pos
         _tmp = apply(:_ws)
+        unless _tmp
+          _tmp = true
+          self.pos = _save3
+        end
         unless _tmp
           self.pos = _save1
           break
@@ -121,8 +131,8 @@ class Plus < KPeg::CompiledParser
 
   Rules = {}
   Rules[:_ws] = rule_info("ws", "/[ \\t\\n]+/")
-  Rules[:_number] = rule_info("number", "< /[0-9]*/ > { text.to_i }")
-  Rules[:_expr] = rule_info("expr", "(expr:e1 ws \"+\" ws expr:e2 { e1 + e2 } | number)")
+  Rules[:_number] = rule_info("number", "< /[0-9]*(\\.[0-9]*)?/ > { text.to_f }")
+  Rules[:_expr] = rule_info("expr", "(expr:e1 ws? \"+\" ws? expr:e2 { e1 + e2 } | number)")
   Rules[:_root] = rule_info("root", "expr:e { @result = e }")
   # :startdoc:
 end
